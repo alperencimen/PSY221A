@@ -1,0 +1,199 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+*My Hypothesis are:
+H1: Attitudes toward gender equality differ significantly across gender groups.
+  Categorical IV: Sex. Continuous DV: Gender equality composite Composite items: Gender_Equality_1, Gender_Equality_2, Gender_Equality_3.
+
+H2: Individuals reporting greater romantic intimacy with their partners report higher relationship satisfaction.
+  Continuous IV: Romantic intimacy composite. Continuous DV: Relationship satisfaction. Composite IV items: Love_1 through Love_15 DV items prqc_1 through prqc_6
+
+
+```{r library}
+library(ggplot2)
+
+```
+
+
+```{r loadingData}
+
+rawData <- read.csv('raw-data/data_doctored.csv')
+
+#Making sure that data exists
+dim(rawData)
+str(rawData)
+
+```
+
+
+```{r checkValidity}
+
+finishedCol <- rawData$Finished == 1#Selecting all the finished surveys (discarding non finished ones).
+DATA <- data.frame(rawData[finishedCol,])#Filtering the data to have only the finished surveys.
+
+
+validResponseIdIndex <- !is.na(DATA$ResponseId) # Identify valid ResponseIds
+DATA <- DATA[validResponseIdIndex, ] # Filter the dataset
+
+# Verify valid responses
+if (sum(is.na(DATA$ResponseId)) == 0) {
+  print("Nice, all the responses are valid!")
+} else {
+  print("There are some NA/NaN responses.")
+}
+```
+
+```{r duration filtering}
+durationRaw <- DATA$Duration..in.seconds. #Survey duration
+durationFiltered <- durationRaw[!is.na(durationRaw)] #Indexes of NA survey durations
+
+firstP <- summary(durationFiltered)[2] #this is the first quartile of the data
+thirdP <- summary(durationFiltered[5]) #this is the third quartile of the data
+idxForFirstQuartileDuration <- durationFiltered >= (firstP / 2) #indexes of answers with greater than or equal to first quartile / 2.
+idxForThirdQuartileDuration <- durationFiltered <= (thirdP*2) #indexes of answers with smallar than or equal to third quartile * 2
+
+DATA <- DATA[idxForFirstQuartileDuration,]#Removing responses that have less duration times than the first quartile/2.
+DATA <- DATA[idxForThirdQuartileDuration,]#Removing responses that have greater duration times than the third quartile * 2.
+
+durationDistHist <- ggplot(data=DATA,
+                       aes(x=Duration..in.seconds.)) + geom_histogram(bins=100) +
+  scale_y_log10() +
+  scale_x_log10() +
+  labs(x="Duration in seconds (LOG Scale)", y="Counts in LOG Scale",title="Survey Response Duration Plot after filtering")
+
+durationDistHist
+
+
+```
+
+
+
+```{r column filtering}
+#The row data has 273 columns/variables. I won't be using all of them for my hypothesis.
+
+genderEqList <- list()
+for (i in 1:3){
+  a <- paste0("Gender_Equality_",i)
+  genderEqList[i] <- a
+  
+}
+
+
+loveList <- list()
+for (i in 1:15){
+  a <- paste0("Love_",i)
+  loveList[i] <- a
+  
+}
+
+pqrList <- list()
+for (i in 1:6){
+  a <- paste0("prqc_",i)
+  pqrList[i] <- a
+  
+}
+
+varNames <- c("Sex", unlist(genderEqList), unlist(loveList), unlist(pqrList))
+
+FDATA <- DATA[varNames] #Filtering data, to select the desired columns. (FDATA == Filtered data)
+
+```
+
+
+
+```{r filtering and recoding}
+validData <- FDATA
+
+genderListFiltering <- apply(FDATA[, unlist(genderEqList)], 1, function(x) all(!is.na(x) & (x >= 1 & x <= 7)))
+loveListFiltering <- apply(FDATA[, unlist(loveList)], 1, function(x) all(!is.na(x) & (x >= 1 & x <= 5)))
+prqcListFiltering <- apply(FDATA[, unlist(pqrList)], 1, function(x) all(!is.na(x) & (x >= 1 & x <= 7)))
+sexFiltering <- !is.na(FDATA$Sex)
+
+combinedIdx <- genderListFiltering & loveListFiltering & prqcListFiltering & sexFiltering
+validData <- FDATA[combinedIdx, ]
+
+
+
+# Reverse-code the gender_equality variables.
+validData[unlist(genderEqList)] <- lapply(
+  validData[unlist(genderEqList)],
+  function(x) as.numeric(8 - as.numeric(x),
+                     levels = 1:7)
+)
+
+```
+
+```{r finding averages}
+
+validData$avgGenderEq <- rowMeans(validData[,unlist(genderEqList)])
+validData$avgLoveIntimacy <- rowMeans(validData[,unlist(loveList)])
+validData$avgPrqc <- rowMeans(validData[,unlist(pqrList)])
+
+```
+
+
+#H1: Attitudes toward gender equality differ significantly across gender groups.
+  Categorical IV: Sex. Continuous DV: Gender equality composite Composite items: Gender_Equality_1, Gender_Equality_2, Gender_Equality_3.
+
+```{r plots: H1}
+
+h1Plot <- ggplot(data = validData, aes(x = factor(Sex), y = as.numeric(avgGenderEq), fill=factor(Sex))) +
+
+  
+  labs(
+    title = "Gender Equality Attitudes by Sex",
+    x = "Sex",
+    y = "Gender Equality Composite Score"
+  ) +
+  geom_violin() +
+  geom_boxplot(width=0.08, box.color="white") +
+labs(title="Gender Equality Attitudes by Sex", x="Sex", y="Gender Equality Composite Attitude Score (1–7)") +
+  scale_x_discrete(
+  labels = c(
+    "0" = "Male",
+    "1" = "Female",
+    "2" = "Non-binary",
+    "3" = "Prefer Not to Say"
+  )
+) + guides(fill=FALSE)+ #Closing the legend 
+   scale_y_continuous(breaks = 1:7, limits = c(1, 7))
+
+pdf(file="plots/h1.pdf")
+h1Plot
+dev.off()
+
+```
+
+H2: Individuals reporting greater romantic intimacy with their partners report higher relationship satisfaction.
+  Continuous IV: Romantic intimacy composite. Continuous DV: Relationship satisfaction. Composite IV items: Love_1 through Love_15 DV items prqc_1 through prqc_6
+  
+  
+```{r plots: H2}
+
+h2Plot <- ggplot(validData, aes(x=avgLoveIntimacy, y=avgPrqc, fill=avgPrqc)) +
+  geom_point(alpha=0.1, position=position_jitter(width=0.05, height=0.05)) +
+  geom_smooth(method="gam", se=T) +
+labs(
+    title = "Romantic Intimacy and Relationship Satisfaction",
+    x = "Romantic Intimacy Composite Score (1–5)",
+    y = "Relationship Composite Satisfaction Score (1–7)"
+  ) +
+  scale_x_continuous(breaks = 1:5) +
+  scale_y_continuous(breaks = 1:7) +
+  theme_minimal() + guides(fill=F) 
+
+pdf(file="plots/h2.pdf")
+h2Plot
+dev.off()
+
+```
+
+#Comments:
+
+It seems like both of my hypothesis hold. More specifically, for my first hypothesis, I was able to see different attitudes toward gender and equality.
+
+For my second hypothesis, it was clearler to interpret, romantic intimacy directly effects relationship satisfaction.
