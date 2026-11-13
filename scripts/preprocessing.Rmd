@@ -48,6 +48,17 @@ if (sum(is.na(DATA$ResponseId)) == 0) {
 ```
 
 ```{r duration filtering}
+###JK: Fix the duration filter before using the resulting data. ###
+# summary(durationFiltered[5]) summarizes the fifth observation, rather than calculating Q3 from all durations. The resulting vector is recycled in the comparison.
+# The two row filters are then applied to different versions of DATA, even though both masks were made from the original rows. This produced 1,714 rows with missing IDs after your ID check.
+# If you have a reason to use these cutoffs, make one mask from the full duration column and apply it once:
+# duration <- DATA$Duration..in.seconds.
+# bounds <- quantile(duration, c(.25, .75), na.rm = TRUE)
+# keep <- !is.na(duration) & duration >= bounds[1] / 2 & duration <= bounds[2] * 2
+# DATA <- DATA[keep, ]
+# State why you chose the cutoffs and report how many rows were removed.
+###  End of comment ###
+
 durationRaw <- DATA$Duration..in.seconds. #Survey duration
 durationFiltered <- durationRaw[!is.na(durationRaw)] #Indexes of NA survey durations
 
@@ -113,6 +124,21 @@ loveListFiltering <- apply(FDATA[, unlist(loveList)], 1, function(x) all(!is.na(
 prqcListFiltering <- apply(FDATA[, unlist(pqrList)], 1, function(x) all(!is.na(x) & (x >= 1 & x <= 7)))
 sexFiltering <- !is.na(FDATA$Sex)
 
+###JK: Make separate datasets for H1 and H2. ###
+# H1 needs gender and gender equality. H2 needs the two relationship scores. Combining all four checks removes respondents for missing items unrelated to the hypothesis being tested.
+# Keep ResponseId in varNames and export separate H1 and H2 tables. The following is an example to adapt for H1 after you fix the duration step:
+# ge <- paste0("Gender_Equality_", 1:3)
+# h1 <- DATA[, c("ResponseId", "Sex", ge)]
+# for (item in ge) {
+#   value <- suppressWarnings(as.numeric(trimws(h1[[item]])))
+#   h1[[item]] <- ifelse(value %in% 1:7, 8 - value, NA_real_)
+# }
+# h1$gender_equality <- rowMeans(h1[, ge], na.rm = FALSE)
+# h1$Sex <- factor(h1$Sex, levels = 0:3, labels = c("Men", "Women", "Non-binary", "Prefer not to say"))
+# h1 <- h1[complete.cases(h1[, c("Sex", "gender_equality")]), c("ResponseId", "Sex", "gender_equality")]
+# Use these gender labels in the H1 plot. For H2, apply the 1-5 and 1-7 item checks to the selected Love and PRQC items separately.
+###  End of comment ###
+
 combinedIdx <- genderListFiltering & loveListFiltering & prqcListFiltering & sexFiltering
 validData <- FDATA[combinedIdx, ]
 
@@ -130,6 +156,15 @@ validData[unlist(genderEqList)] <- lapply(
 ```{r finding averages}
 
 validData$avgGenderEq <- rowMeans(validData[,unlist(genderEqList)])
+###JK: Match the H2 item sets to the constructs in your hypothesis. ###
+# Love_1-15 cover intimacy, passion, and commitment. Use Love_1-5 for intimacy. PRQC_1-3 measure satisfaction, and PRQC_4-6 measure commitment.
+# If keeping the current hypothesis, change both item lists before validating and averaging, so eligibility and scoring use the same items:
+# loveList <- paste0("Love_", 1:5)
+# pqrList <- paste0("prqc_", 1:3)
+# If keeping the broader scales, revise the hypothesis and axis labels to match. The plot shows an association, so describe the pattern without saying one score directly affects the other.
+# Add var_label() descriptions for the two final tables and use compact_codebook() as in Lab 03. Save the final tables with write.csv(..., row.names = FALSE) for later labs.
+###  End of comment ###
+
 validData$avgLoveIntimacy <- rowMeans(validData[,unlist(loveList)])
 validData$avgPrqc <- rowMeans(validData[,unlist(pqrList)])
 
