@@ -4,13 +4,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-###JK: Please add the remaining descriptive, Quarto, and GitHub Pages assignments. ###
-# I found your updated processing and visualization work, but could not find a descriptive-statistics assignment, a .qmd report, or a published project page as of November 19.
-# Push a separate Rmd or R script summarizing the continuous variables in your hypotheses, then a Quarto report containing your hypotheses, variable descriptions, summaries, and graphs.
-# For GitHub Pages, render the report and publish its HTML through docs/index.html. If these assignments are already in another repository, please send John their exact locations.
-###  End of comment ###
-
-
 
 *My Hypothesis are:
 H1: Attitudes toward gender equality differ significantly across gender groups.
