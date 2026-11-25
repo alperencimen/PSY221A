@@ -10,7 +10,7 @@ H1: Attitudes toward gender equality differ significantly across gender groups.
   Categorical IV: Sex. Continuous DV: Gender equality composite Composite items: Gender_Equality_1, Gender_Equality_2, Gender_Equality_3.
 
 H2: Individuals reporting greater romantic intimacy with their partners report higher relationship satisfaction.
-  Continuous IV: Romantic intimacy composite. Continuous DV: Relationship satisfaction. Composite IV items: Love_1 through Love_5 DV items prqc_1 through prqc_6
+  Continuous IV: Romantic intimacy composite. Continuous DV: Relationship satisfaction. Composite IV items: Love_1 through Love_5 DV items prqc_1 through prqc_3
 
 ## 1. Load the processed data
 
@@ -49,35 +49,25 @@ sex_bar <- ggplot(data = h1Data,
 sex_bar
 
 
-genderEqBar <- ggplot(data = h1Data,
-                     aes(x = avgGenderEq,
-                     fill = avgGenderEq)) +
-  geom_bar() +
-  labs(x="Avg Gender Equality Scores",
-       y="Amount of Responses",
-       title="Histogram plot of responses of Avg Gender Equality.") + theme(legend.position = "none") 
-genderEqBar
+genderEqHist <- ggplot(h1Data, aes(x = avgGenderEq)) +
+  geom_histogram(bins = 30) +
+  labs(x = "Avg Gender Equality Score (1-7)", y = "Count",
+       title = "Distribution of Gender Equality Scores")
+genderEqHist
 
 
-avgLoveIntimacy <- ggplot(data = h2Data,
-                     aes(x = avgLoveIntimacy,
-                     fill = avgLoveIntimacy)) +
-  geom_bar() +
-  labs(x="Avg Intimacy Scores",
-       y="Amount of Responses.",
-       title="Histogram plot of responses of Avg Intimacy Scores") + theme(legend.position = "none") 
+avgLoveIntimacy <- ggplot(h2Data, aes(x = avgLoveIntimacy)) +
+  geom_histogram(bins = 30) +
+  labs(x = "Avg Intimacy Score (1-5)", y = "Count",
+       title = "Distribution of Romantic Intimacy Scores")
 avgLoveIntimacy
 
 
-avgRelationshipSatis <- ggplot(data = h2Data,
-                     aes(x = avgPrqc,
-                     fill = avgPrqc)) +
-  geom_bar() +
-  labs(x="Avg Relationship Satisfaction",
-       y="Amount of Responses.",
-       title="Histogram plot of responses of Avg Relationship Satisfaction Scores") + theme(legend.position = "none")
+avgRelationshipSatis <- ggplot(h2Data, aes(x = avgPrqc)) +
+  geom_histogram(bins = 30) +
+  labs(x = "Avg Relationship Satisfaction (1-7)", y = "Count",
+       title = "Distribution of Relationship Satisfaction Scores")
 avgRelationshipSatis
-
 
 
 
@@ -96,10 +86,8 @@ median(h1Data$avgGenderEq)
 median(h2Data$avgLoveIntimacy)
 median(h2Data$avgPrqc)
 
-# Table: count how many people are in each category.
-table(h1Data$avgGenderEq)
-table(h2Data$avgLoveIntimacy)
-table(h2Data$avgPrqc)
+# Table:counting how many people are in each sex group
+table(h1Data$Sex)
 
 # Range: return the minimum and maximum, rather than their difference.
 range(h1Data$avgGenderEq)
@@ -117,11 +105,8 @@ IQR(h2Data$avgPrqc)
 ## 4. Standardize a variable
 
 ```{r standardize}
-# scale() uses z = (original score - mean) / standard deviation by default.
-# Keep the original commitment scores and store the standardized values separately.
-# scale() returns a matrix; as.numeric() makes a simple numeric column.
 
-# Standardized scores have mean approximately 0 and standard deviation 1.
+# Standardized scores have mean equal to 0 and standard deviation equals to 1.
 
 #Standardize H1: Avg Gender Equality
 h1Data$avgGenderEqStandardized <- as.numeric(scale(h1Data$avgGenderEq))
@@ -136,13 +121,10 @@ h2Data$avgLoveIntimacyStandardized <- as.numeric(scale(h2Data$avgLoveIntimacy))
 
 ```{r}
 
-ggplot(data = h2Data,
-                     aes(x = avgLoveIntimacyStandardized,
-                     fill = avgLoveIntimacyStandardized)) +
-  geom_bar() +
-  labs(x="Avg Relationship Satisfaction (standardized)",
-       y="Amount of Responses.",
-       title="Histogram plot of responses of Avg Relationship Satisfaction Scores (standardized)") + theme(legend.position = "none")
+ggplot(h2Data, aes(x = avgLoveIntimacyStandardized)) +
+  geom_histogram(bins = 30) +
+  labs(x = "Romantic Intimacy (z-score)", y = "Count",
+       title = "Distribution of Standardized Romantic Intimacy Scores (standardized)")
 
 
 ```
@@ -159,7 +141,7 @@ ggplot(data = h2Data,
 
 #Covariance for H2 
 cov(h2Data$avgLoveIntimacy, h2Data$avgPrqc, use = "complete.obs")
-## output: high correlation
+
 # Correlation for H2
 cor(h2Data$avgLoveIntimacy, h2Data$avgPrqc, use = "complete.obs")
 ## output: high correlation
@@ -190,44 +172,12 @@ psych::describe(h2Data$avgLoveIntimacy)
 ```
 
 
-```{r Descriptive stats for individualistic Attitudes by  Employment Variable Category H1}
-# aggregate() allows to calculate statistics seperately for different groups in the dataset
-## ind_rev_mean ~ Employment_group tells R to calculate the statistic seperately for each Employment_group
+```{r  H1 stats by sex}
+# aggregate() calculates statistics separately for each sex group
 
-#mean
-aggregate(avgGenderEq ~ avgGenderEqStandardized,
-          data = h1Data,
-          FUN = mean,
-          na.rm = TRUE)
-#median
-aggregate(avgGenderEq ~ avgGenderEqStandardized,
-          data = h1Data,
-          FUN = median,
-          na.rm = TRUE)
-#standard deviation
-aggregate(avgGenderEq ~ avgGenderEqStandardized,
-          data = h1Data,
-          FUN = sd,
-          na.rm = TRUE)
-
-```
-
-```{r data processing}
-#mean
-aggregate(avgLoveIntimacy ~ avgPrqc,
-          data = h2Data,
-          FUN = mean,
-          na.rm = TRUE)
-#median
-aggregate(avgLoveIntimacy ~ avgPrqc,
-          data = h2Data,
-          FUN = median,
-          na.rm = TRUE)
-#standard deviation
-aggregate(avgLoveIntimacy ~ avgPrqc,
-          data = h2Data,
-          FUN = sd,
-          na.rm = TRUE)
+aggregate(avgGenderEq ~ Sex, data = h1Data, FUN = mean)
+aggregate(avgGenderEq ~ Sex, data = h1Data, FUN = median)
+aggregate(avgGenderEq ~ Sex, data = h1Data, FUN = sd)
 
 ```
 
