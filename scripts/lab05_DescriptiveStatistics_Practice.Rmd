@@ -1,0 +1,233 @@
+---
+title: "PSY221A: Descriptive Statistics"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+#Again, My Hypothesis are:
+H1: Attitudes toward gender equality differ significantly across gender groups.
+  Categorical IV: Sex. Continuous DV: Gender equality composite Composite items: Gender_Equality_1, Gender_Equality_2, Gender_Equality_3.
+
+H2: Individuals reporting greater romantic intimacy with their partners report higher relationship satisfaction.
+  Continuous IV: Romantic intimacy composite. Continuous DV: Relationship satisfaction. Composite IV items: Love_1 through Love_5 DV items prqc_1 through prqc_6
+
+## 1. Load the processed data
+
+```{r load}
+# Open the project's .Rproj file before running chunks.
+# Install psych once in the Console if needed: install.packages("psych")
+
+library(psych)
+library(ggplot2)
+
+h1Data <- read.csv("processed-data/H1.csv")
+h2Data <- read.csv("processed-data/H2.csv")
+
+
+```
+
+## 2. Look at the distribution first
+
+```{r histogram}
+# A histogram groups numerical values into intervals (bins).
+# Bar height shows how many observations fall in each interval.
+# Start by looking at the distribution before calculating summary statistics.
+# Add readable labels to the same histogram.
+
+#H1
+## Sex (categorical variable)
+
+sex_bar <- ggplot(data = h1Data,
+                     aes(x = Sex,
+                     fill = Sex)) +
+  geom_bar() +
+  labs(x="Sex Groups",
+       y="Amount of People participated in the survey.\n (LOG Scale)",
+       title="Histogram plot of responses of sex variable in LOG Scale") + theme(legend.position = "none") +
+  scale_y_log10()
+sex_bar
+
+
+genderEqBar <- ggplot(data = h1Data,
+                     aes(x = avgGenderEq,
+                     fill = avgGenderEq)) +
+  geom_bar() +
+  labs(x="Avg Gender Equality Scores",
+       y="Amount of Responses",
+       title="Histogram plot of responses of Avg Gender Equality.") + theme(legend.position = "none") 
+genderEqBar
+
+
+avgLoveIntimacy <- ggplot(data = h2Data,
+                     aes(x = avgLoveIntimacy,
+                     fill = avgLoveIntimacy)) +
+  geom_bar() +
+  labs(x="Avg Intimacy Scores",
+       y="Amount of Responses.",
+       title="Histogram plot of responses of Avg Intimacy Scores") + theme(legend.position = "none") 
+avgLoveIntimacy
+
+
+avgRelationshipSatis <- ggplot(data = h2Data,
+                     aes(x = avgPrqc,
+                     fill = avgPrqc)) +
+  geom_bar() +
+  labs(x="Avg Relationship Satisfaction",
+       y="Amount of Responses.",
+       title="Histogram plot of responses of Avg Relationship Satisfaction Scores") + theme(legend.position = "none")
+avgRelationshipSatis
+
+
+
+
+```
+
+## 3. One statistic at a time
+
+```{r individual_statistics}
+# Mean: add the scores and divide by the number of observed responses.
+mean(h1Data$avgGenderEq)
+mean(h2Data$avgLoveIntimacy)
+mean(h2Data$avgPrqc)
+
+# Median: the middle score after sorting the responses.
+median(h1Data$avgGenderEq)
+median(h2Data$avgLoveIntimacy)
+median(h2Data$avgPrqc)
+
+# Table: count how many people are in each category.
+table(h1Data$avgGenderEq)
+table(h2Data$avgLoveIntimacy)
+table(h2Data$avgPrqc)
+
+# Range: return the minimum and maximum, rather than their difference.
+range(h1Data$avgGenderEq)
+range(h2Data$avgLoveIntimacy)
+range(h2Data$avgPrqc)
+
+# IQR: the 75th percentile minus the 25th percentile.
+IQR(h1Data$avgGenderEq)
+IQR(h2Data$avgLoveIntimacy)
+IQR(h2Data$avgPrqc)
+
+
+```
+
+## 4. Standardize a variable
+
+```{r standardize}
+# scale() uses z = (original score - mean) / standard deviation by default.
+# Keep the original commitment scores and store the standardized values separately.
+# scale() returns a matrix; as.numeric() makes a simple numeric column.
+
+# Standardized scores have mean approximately 0 and standard deviation 1.
+
+#Standardize H1: Avg Gender Equality
+h1Data$avgGenderEqStandardized <- as.numeric(scale(h1Data$avgGenderEq))
+
+#Standardize H2: avg prqc
+h2Data$avgPrqcStandardized <- as.numeric(scale(h2Data$avgPrqc))
+
+#Standardize H2: avg love intimacy
+h2Data$avgLoveIntimacyStandardized <- as.numeric(scale(h2Data$avgLoveIntimacy))
+
+```
+
+```{r}
+
+ggplot(data = h2Data,
+                     aes(x = avgLoveIntimacyStandardized,
+                     fill = avgLoveIntimacyStandardized)) +
+  geom_bar() +
+  labs(x="Avg Relationship Satisfaction (standardized)",
+       y="Amount of Responses.",
+       title="Histogram plot of responses of Avg Relationship Satisfaction Scores (standardized)") + theme(legend.position = "none")
+
+
+```
+
+## 5. Covariance and correlation
+
+```{r association}
+# Covariance describes whether two variables tend to move together.
+# Positive: higher values tend to occur together. Negative: higher values tend to accompany lower values.
+# Its size depends on the units and is not restricted to -1 through 1.
+
+# Pearson correlation expresses a linear association on a -1 to 1 scale.
+
+
+#Covariance for H2 
+cov(h2Data$avgLoveIntimacy, h2Data$avgPrqc, use = "complete.obs")
+## output: high correlation
+# Correlation for H2
+cor(h2Data$avgLoveIntimacy, h2Data$avgPrqc, use = "complete.obs")
+## output: high correlation
+
+#Correlation Matrix for H2
+corData <- h2Data[, c("avgLoveIntimacy", "avgPrqc")]
+cor(corData, use = "complete.obs")
+```
+
+## 6. Several statistics at once
+
+```{r combined_summaries}
+# summary() reports minimum, quartiles, median, mean, maximum, and missing counts when present.
+
+# psych::describe() reports n, mean, SD, median, minimum, maximum, range width (max minus min), skewness, kurtosis, and other summaries.
+# However it does not report every statistic above: compute IQR, cov(), and cor() separately.
+
+
+summary(h1Data$avgGenderEq)
+psych::describe(h1Data$avgGenderEq)
+
+summary(h2Data$avgPrqc)
+psych::describe(h2Data$avgPrqc)
+
+summary(h2Data$avgLoveIntimacy)
+psych::describe(h2Data$avgLoveIntimacy)
+
+```
+
+
+```{Descriptive stats for individualistic Attitudes by  Employment Variable Category H1}
+# aggregate() allows to calculate statistics seperately for different groups in the dataset
+## ind_rev_mean ~ Employment_group tells R to calculate the statistic seperately for each Employment_group
+
+#mean
+aggregate(avgGenderEq ~ avgGenderEqStandardized,
+          data = h1Data,
+          FUN = mean,
+          na.rm = TRUE)
+#median
+aggregate(avgGenderEq ~ avgGenderEqStandardized,
+          data = h1Data,
+          FUN = median,
+          na.rm = TRUE)
+#standard deviation
+aggregate(avgGenderEq ~ avgGenderEqStandardized,
+          data = h1Data,
+          FUN = sd,
+          na.rm = TRUE)
+
+```
+
+```{r}
+#mean
+aggregate(avgLoveIntimacy ~ avgPrqc,
+          data = h2Data,
+          FUN = mean,
+          na.rm = TRUE)
+#median
+aggregate(avgLoveIntimacy ~ avgPrqc,
+          data = h2Data,
+          FUN = median,
+          na.rm = TRUE)
+#standard deviation
+aggregate(avgLoveIntimacy ~ avgPrqc,
+          data = h2Data,
+          FUN = sd,
+          na.rm = TRUE)
+
+```
+

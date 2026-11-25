@@ -10,7 +10,7 @@ H1: Attitudes toward gender equality differ significantly across gender groups.
   Categorical IV: Sex. Continuous DV: Gender equality composite Composite items: Gender_Equality_1, Gender_Equality_2, Gender_Equality_3.
 
 H2: Individuals reporting greater romantic intimacy with their partners report higher relationship satisfaction.
-  Continuous IV: Romantic intimacy composite. Continuous DV: Relationship satisfaction. Composite IV items: Love_1 through Love_15 DV items prqc_1 through prqc_6
+  Continuous IV: Romantic intimacy composite. Continuous DV: Relationship satisfaction. Composite IV items: Love_1 through Love_5 DV items prqc_1 through prqc_6
 
 
 ```{r library}
