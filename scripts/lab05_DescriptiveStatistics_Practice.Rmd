@@ -190,7 +190,7 @@ psych::describe(h2Data$avgLoveIntimacy)
 ```
 
 
-```{Descriptive stats for individualistic Attitudes by  Employment Variable Category H1}
+```{r Descriptive stats for individualistic Attitudes by  Employment Variable Category H1}
 # aggregate() allows to calculate statistics seperately for different groups in the dataset
 ## ind_rev_mean ~ Employment_group tells R to calculate the statistic seperately for each Employment_group
 
@@ -212,7 +212,7 @@ aggregate(avgGenderEq ~ avgGenderEqStandardized,
 
 ```
 
-```{r}
+```{r data processing}
 #mean
 aggregate(avgLoveIntimacy ~ avgPrqc,
           data = h2Data,
