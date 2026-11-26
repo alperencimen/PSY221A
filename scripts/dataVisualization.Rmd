@@ -1,0 +1,118 @@
+---
+title: "PSY221A: Data Visualization"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Hypotheses
+Here I am rewriting the hypothesis here for convinience.
+
+H1: Attitudes toward gender equality differ significantly across gender groups.
+  Categorical IV: Sex. Continuous DV: Gender equality composite. Composite items: Gender_Equality_1, Gender_Equality_2, Gender_Equality_3.
+
+H2: Individuals reporting greater romantic intimacy with their partners report higher relationship satisfaction.
+  Continuous IV: Romantic intimacy composite. Continuous DV: Relationship satisfaction. Composite IV items: Love_1 through Love_5. DV items: prqc_1 through prqc_3.
+
+```{r load packages}
+
+library(ggplot2)
+```
+
+# Load the processed data
+
+```{r load data}
+#these were the saved csv files from the dataprocessing rmd file.
+h1Data <- read.csv("processed-data/H1.csv")
+h2Data <- read.csv("processed-data/H2.csv")
+```
+
+# Check the variable types to choose the plots
+
+```{r check data}
+str(h1Data)
+str(h2Data)
+
+# H1: Sex is categorical and avgGenderEq is continuous (boxplot, violin plot)
+# H2: both variables are continuous -> scatterplot 
+
+h1Data$Sex <- factor(h1Data$Sex,
+                     levels = c("Men", "Women", "Non-binary", "Prefer not to say"))
+table(h1Data$Sex)
+```
+
+# H1: Gender equality attitudes by sex
+
+#H1: Boxplot
+
+```{r h1 boxplot}
+h1BoxPlot <- ggplot(data = h1Data,
+                    aes(x = Sex,
+                        y = avgGenderEq,
+                        fill = Sex)) +
+  geom_boxplot() +
+  stat_summary(fun.data = mean_se,
+               fun.args = list(mult = 1.96),
+               geom = "errorbar",
+               width = 0.2) +
+  labs(x = "Sex",
+       y = "Gender Equality Composite Score (1-7)",
+       title = "Gender Equality Attitudes by Sex") +
+  scale_y_continuous(limits = c(1, 7), breaks = 1:7) +
+  guides(fill = "none") +
+  theme_gray(base_size = 13)
+h1BoxPlot
+```
+
+# H1: Violin plot (+ boxplot)
+
+```{r h1 violin}
+h1ViolinPlot <- ggplot(data = h1Data,
+                       aes(x = Sex,
+                           y = avgGenderEq,
+                           fill = Sex)) +
+  geom_violin() +
+  geom_boxplot(width = 0.08, fill = "white") +
+  labs(x = "Sex",
+       y = "Gender Equality Composite Score (1-7)",
+       title = "Gender Equality Attitudes by Sex") +
+  scale_y_continuous(limits = c(1, 7), breaks = 1:7) +
+  guides(fill = "none") +
+  theme_gray(base_size = 13)
+h1ViolinPlot
+```
+
+# H2: Romantic intimacy and relationship satisfaction
+
+# H2: Jittered scatterplot + regression
+
+```{r h2 scatterplot}
+# Scores are averages of a few items, so many people share the same value.
+# geom_jitter() spreads the points slightly so overlapping points are visible (i.e., it adds noise.)
+
+h2ScatterPlot <- ggplot(data = h2Data,
+                        aes(x = avgLoveIntimacy,
+                            y = avgPrqc)) +
+  geom_jitter(width = 0.05,
+              height = 0.05,
+              alpha = 0.05,
+              size = 0.6) +
+  geom_smooth(method = "lm") +
+  labs(x = "Romantic Intimacy Composite Score (1-5)",
+       y = "Relationship Satisfaction Composite Score (1-7)",
+       title = "Romantic Intimacy and Relationship Satisfaction") +
+  scale_x_continuous(breaks = 1:5) +
+  scale_y_continuous(breaks = 1:7) +
+  theme_gray(base_size = 13)
+h2ScatterPlot
+
+# The plot shows an association only; it does not show that intimacy causes satisfaction!
+```
+
+# Saving figures
+
+```{r save figures}
+ggsave("plots/h1BoxPlot.pdf", plot = h1BoxPlot)
+ggsave("plots/h1ViolinPlot.pdf", plot = h1ViolinPlot)
+ggsave("plots/h2ScatterPlot.pdf", plot = h2ScatterPlot)
+```

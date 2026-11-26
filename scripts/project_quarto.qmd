@@ -1,0 +1,135 @@
+---
+title: "Gender Equality Attitudes, Romantic Intimacy, and Relationship Satisfaction"
+subtitle: "PSY221A Lab Project"
+author: "Alperen Cimen"
+date: today
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+editor: visual
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: load-data
+#| include: false
+library(ggplot2)
+
+h1Data <- read.csv("../processed-data/H1.csv")
+h2Data <- read.csv("../processed-data/H2.csv")
+
+# Making Sex a factor again 
+h1Data$Sex <- factor(h1Data$Sex,
+                     levels = c("Men", "Women", "Non-binary", "Prefer not to say"))
+```
+
+This report uses the dataset provided to us during the lab section. The data is about the cross-cultural romantic love and mate preferences. The data were cleaned in `scripts/dataprocessing.Rmd`: only finished surveys with a valid ID were kept, responses below the 10th or above the 90th percentile of completion time were removed (to get rid of the noise in the data), and items outside their valid range were excluded separately for each hypothesis.
+
+## Hypothesis 1
+
+Attitudes toward gender equality differ across gender groups.
+
+### Variables and descriptive statistics
+
+- **Sex ('Sex'):** A categorical variable with four groups: Men, Women, Non-binary, and Prefer not to say.
+- **Gender Equality Attitudes ('avgGenderEq'):** The mean of reverse-coded (8 − x) responses to Gender_Equality_1, Gender_Equality_2, and Gender_Equality_3. Each item ranges from 1 to 7; higher scores indicate stronger support for gender equality. All three items were required.
+
+```{r}
+#| label: h1-descriptives
+# Count respondents in each group.
+table(h1Data$Sex)
+
+# Summarize gender equality scores separately for each group.
+by(h1Data$avgGenderEq, h1Data$Sex, summary)
+
+# std for each group.
+tapply(h1Data$avgGenderEq, h1Data$Sex, sd)
+```
+
+### Graph
+
+@fig-genderEq shows the distribution of gender equality attitudes by sex. The violins show the shape of each group's distribution, and the white boxes show the median and the middle 50% of scores.
+
+```{r}
+#| label: fig-genderEq
+#| fig-cap: "Gender equality attitudes, by sex."
+#| fig-width: 8
+#| fig-height: 5
+ggplot(h1Data, aes(x = Sex, y = avgGenderEq, fill = Sex)) +
+  geom_violin() +
+  geom_boxplot(width = 0.08, fill = "white") +
+  labs(x = "Sex",
+       y = "Gender Equality Composite Score (1-7)",
+       title = "Gender Equality Attitudes by Sex") +
+  scale_y_continuous(limits = c(1, 7), breaks = 1:7) +
+  guides(fill = "none") +
+  theme_gray(base_size = 13)
+```
+
+### Observed pattern
+
+```{r}
+#| label: h1-means
+m <- round(tapply(h1Data$avgGenderEq, h1Data$Sex, mean), 2)
+m
+```
+
+Scores were high in every group, with many participants at the top of the scale. Men had the lowest mean (`{r} m["Men"]`) and the widest spread, followed by women (`{r} m["Women"]`). Non-binary participants (`{r} m["Non-binary"]`) and those who preferred not to say (`{r} m["Prefer not to say"]`) scored highest, but these groups are much smaller than the men and women groups, so their estimates are less precise. These are descriptive differences; no statistical test has been run, yet.
+
+## Hypothesis 2
+
+Individuals reporting greater romantic intimacy with their partners report higher relationship satisfaction.
+
+### Variables and descriptive statistics
+
+- **Romantic Intimacy ('avgLoveIntimicy'):** The mean of responses to the intimacy items Love_1 through Love_5. Each item ranges from 1 to 5; higher scores indicate greater romantic intimacy. All five items were required.
+- **Relationship Satisfaction ('avgPrqc'):** The mean of responses to the satisfaction items prqc_1 through prqc_3. Each item ranges from 1 to 7; higher scores indicate greater relationship satisfaction. All three items were required.
+
+```{r}
+#| label: h2-descriptives
+summary(h2Data[, c("avgLoveIntimacy", "avgPrqc")])
+
+# Standard deviations
+sapply(h2Data[, c("avgLoveIntimacy", "avgPrqc")], sd)
+```
+
+### Graph
+
+@fig-intimacy shows the relationship between romantic intimacy and relationship satisfaction. Points are jittered (i.e., added noise) to make overlapping responses easier to see; the recorded scores are unchanged. The line summarizes the linear trend.
+
+```{r}
+#| label: fig-intimacy
+#| fig-cap: "Romantic intimacy and relationship satisfaction."
+#| fig-width: 8
+#| fig-height: 5
+ggplot(h2Data, aes(x = avgLoveIntimacy, y = avgPrqc)) +
+  geom_jitter(width = 0.05, height = 0.05, alpha = 0.05, size = 0.6) +
+  geom_smooth(method = "lm") +
+  labs(x = "Romantic Intimacy Composite Score (1-5)",
+       y = "Relationship Satisfaction Composite Score (1-7)",
+       title = "Romantic Intimacy and Relationship Satisfaction") +
+  scale_x_continuous(breaks = 1:5) +
+  scale_y_continuous(breaks = 1:7) +
+  theme_gray(base_size = 13)
+```
+
+### Observed trend
+
+```{r}
+#| label: correlation
+r <- cor(h2Data$avgLoveIntimacy, h2Data$avgPrqc, use = "complete.obs")
+round(r, 2) # rounds the correlation to 2 decimal places
+```
+
+The correlation was `{r} round(r, 2)`, indicating a strong positive association. Respondents who reported more romantic intimacy tended to report higher relationship satisfaction. Because the data are correlational, this does not show that intimacy causes satisfaction.
+
+## Code
+
+- Data processing: `scripts/dataprocessing.Rmd`
+- Descriptive statistics: `scripts/lab05_DescriptiveStatistics_Practice.Rmd`
+- Visualization: `scripts/dataVisualization.Rmd`
